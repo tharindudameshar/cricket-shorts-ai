@@ -29,7 +29,7 @@ Automatically convert long cricket match videos (20–60 minutes) into viral-rea
 - Node.js 20+
 - Python 3.11+
 - FFmpeg (`brew install ffmpeg`)
-- PostgreSQL (or use Docker)
+- PostgreSQL (Homebrew or Docker)
 
 ### 1. Environment
 
@@ -38,7 +38,26 @@ cp .env.example .env
 # Edit DATABASE_URL, AWS keys, optional OPENAI_API_KEY for titles
 ```
 
-### 2. Database (Docker)
+### 2. Database
+
+**Option A — Homebrew (no Docker)** — you already have PostgreSQL 16:
+
+```bash
+# Start Postgres (if not running)
+brew services start postgresql@16
+
+# One-time: create app user + database
+psql -h localhost -d postgres <<'SQL'
+CREATE ROLE cricket WITH LOGIN PASSWORD 'cricket' CREATEDB;
+CREATE DATABASE cricket_shorts OWNER cricket;
+SQL
+```
+
+Default `DATABASE_URL` in `.env.example` matches this setup:
+
+`postgresql+asyncpg://cricket:cricket@localhost:5432/cricket_shorts`
+
+**Option B — Docker** (requires [Docker Desktop](https://www.docker.com/products/docker-desktop/)):
 
 ```bash
 docker compose up -d postgres
@@ -57,9 +76,11 @@ uvicorn app.main:app --reload --port 8000
 In another terminal, start the worker:
 
 ```bash
-cd backend && source .venv/bin/activate
-python -m app.workers.processor
+cd backend
+./run-worker.sh
 ```
+
+If you use **conda** `(base)` alongside `.venv`, `python` may point at the wrong interpreter (missing packages). Always use `.venv/bin/python` or the helper scripts above—not bare `python`.
 
 ### 4. Frontend
 

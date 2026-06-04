@@ -1,3 +1,1 @@
-from app.services.pipeline.orchestrator import run_analysis_pipeline
-
-__all__ = ["run_analysis_pipeline"]
+# Lazy imports: avoid loading librosa/torch when only clip_generator types are needed.
