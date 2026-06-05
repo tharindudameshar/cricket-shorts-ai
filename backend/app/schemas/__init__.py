@@ -1,5 +1,7 @@
 from app.schemas.job import (
     AnalyticsResponse,
+    BatchFolderRequest,
+    BatchFolderResponse,
     JobCreate,
     JobCreateYouTube,
     JobListItem,

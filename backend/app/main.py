@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import files, jobs, shorts
 from app.config import get_settings
 from app.database import init_db
+from app.services.batch_folder import ensure_inbox_dirs, resolve_inbox
 
 
 @asynccontextmanager
@@ -15,6 +16,7 @@ async def lifespan(_app: FastAPI):
     await init_db()
     settings = get_settings()
     settings.storage_root.mkdir(parents=True, exist_ok=True)
+    ensure_inbox_dirs(resolve_inbox(None, settings))
     yield
 
 
@@ -48,4 +50,9 @@ if settings.storage_root.exists():
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "demo_mode": settings.ai_demo_mode}
+    return {
+        "status": "ok",
+        "demo_mode": settings.ai_demo_mode,
+        "short_output_mode": settings.short_output_mode,
+        "short_resolution": f"{settings.short_output_width}x{settings.short_output_height}",
+    }

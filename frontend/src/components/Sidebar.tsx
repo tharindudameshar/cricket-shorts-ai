@@ -6,6 +6,7 @@ import {
   BarChart3,
   Clapperboard,
   Download,
+  FolderInput,
   Home,
   Upload,
   Zap,
@@ -14,6 +15,7 @@ import {
 const nav = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/upload", label: "Upload", icon: Upload },
+  { href: "/batch", label: "Batch Folder", icon: FolderInput },
   { href: "/gallery", label: "Shorts Gallery", icon: Clapperboard },
   { href: "/downloads", label: "Download Center", icon: Download },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },

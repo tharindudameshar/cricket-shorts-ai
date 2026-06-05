@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
+import { DashboardActions } from "@/components/DashboardActions";
 import { api } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +30,21 @@ export default async function DashboardPage() {
             AI turns full matches into viral-ready vertical shorts.
           </p>
         </div>
-        <Link
-          href="/upload"
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 px-5 py-2.5 text-sm font-medium text-white"
-        >
-          New project
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <DashboardActions
+            completedCount={
+              jobs.filter((j) => j.status === "completed" || j.status === "failed")
+                .length
+            }
+          />
+          <Link
+            href="/upload"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 px-5 py-2.5 text-sm font-medium text-white"
+          >
+            New project
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </header>
 
       <section className="mb-10 grid gap-4 sm:grid-cols-3">

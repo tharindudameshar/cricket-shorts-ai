@@ -56,3 +56,22 @@ class AnalyticsResponse(BaseModel):
     avg_viral_score: float
     top_highlight_types: list[dict[str, int]]
     processing_hours_saved: float
+
+
+class BatchFolderRequest(BaseModel):
+    folder_path: str | None = Field(
+        None,
+        description="Absolute or storage-relative inbox path. Defaults to BATCH_INBOX_FOLDER.",
+    )
+    league: str | None = Field(None, description="ipl | icc | generic")
+    max_files: int | None = Field(None, ge=1, le=100)
+
+
+class BatchFolderResponse(BaseModel):
+    inbox_path: str
+    scanned: int
+    queued: int
+    skipped: int
+    failed: int
+    errors: list[str]
+    jobs: list[JobResponse]

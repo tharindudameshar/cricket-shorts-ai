@@ -71,6 +71,25 @@ export interface Analytics {
   processing_hours_saved: number;
 }
 
+export interface BatchFolderStatus {
+  inbox_path: string;
+  pending_count: number;
+  pending_files: string[];
+  processed_count: number;
+  failed_count: number;
+  auto_scan_enabled: boolean;
+}
+
+export interface BatchFolderResult {
+  inbox_path: string;
+  scanned: number;
+  queued: number;
+  skipped: number;
+  failed: number;
+  errors: string[];
+  jobs: Job[];
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...init,
@@ -110,6 +129,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, title, league }),
     }),
+  batchFolderStatus: () => request<BatchFolderStatus>("/jobs/batch-folder/status"),
+  batchFolderScan: (league?: string) =>
+    request<BatchFolderResult>("/jobs/batch-folder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ league }),
+    }),
   exportShorts: (platform: string, fps: number, jobId?: string) =>
     request<{ exported: number; message: string }>("/shorts/export", {
       method: "POST",
@@ -121,4 +147,8 @@ export const api = {
       }),
     }),
   fileUrl: (path: string) => `${API_BASE}${path}`,
+  deleteJob: (id: string) =>
+    request<{ deleted: boolean }>(`/jobs/${id}`, { method: "DELETE" }),
+  deleteCompletedJobs: () =>
+    request<{ deleted: number }>("/jobs/completed", { method: "DELETE" }),
 };

@@ -7,9 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.highlight import Highlight
 from app.models.job import JobStatus, ProcessingJob
 from app.models.short import ExportPlatform, GeneratedShort
-from app.services.pipeline.clip_generator import generate_thumbnail, generate_vertical_short
+from app.services.pipeline.clip_generator import (
+    generate_thumbnail,
+    generate_vertical_short,
+    output_dimensions,
+    output_fps,
+)
 from app.services.pipeline.metadata import build_description, build_hashtags
 from app.services.pipeline.orchestrator import run_analysis_pipeline
+from app.config import get_settings
 from app.services.storage import StorageService
 
 
@@ -29,6 +35,16 @@ async def process_job(session: AsyncSession, job_id: uuid.UUID) -> None:
             job.status = status
 
     try:
+        video = Path(job.video_path)
+        size_mb = video.stat().st_size / (1024 * 1024) if video.exists() else 0
+        settings = get_settings()
+        max_mb = settings.batch_max_file_size_mb
+        if max_mb > 0 and size_mb > max_mb:
+            raise ValueError(
+                f"Video is {size_mb:.0f} MB (max {max_mb} MB). "
+                "Set BATCH_MAX_FILE_SIZE_MB=0 in .env to allow large files."
+            )
+
         update(0, "Starting analysis...", JobStatus.ANALYZING)
         await session.commit()
 
@@ -76,7 +92,7 @@ async def process_job(session: AsyncSession, job_id: uuid.UUID) -> None:
             thumb_file = thumb_dir / f"{short_id}.jpg"
             slow = moment.highlight_type.value in ("wicket", "catch", "stumping")
             try:
-                generate_vertical_short(video, moment, out_file, fps=30, slow_motion=slow)
+                generate_vertical_short(video, moment, out_file, slow_motion=slow)
                 generate_thumbnail(video, moment.start_time, thumb_file)
             except Exception:
                 out_file.write_bytes(b"")
@@ -89,6 +105,8 @@ async def process_job(session: AsyncSession, job_id: uuid.UUID) -> None:
             )
             hl = hl_result.scalar_one_or_none()
 
+            out_w, out_h = output_dimensions(video)
+            src_fps = output_fps(video)
             short = GeneratedShort(
                 job_id=job.id,
                 highlight_id=hl.id if hl else None,
@@ -98,6 +116,9 @@ async def process_job(session: AsyncSession, job_id: uuid.UUID) -> None:
                 file_path=str(out_file),
                 thumbnail_path=str(thumb_file) if thumb_file and thumb_file.exists() else None,
                 duration_seconds=moment.end_time - moment.start_time,
+                width=out_w,
+                height=out_h,
+                fps=round(src_fps),
                 platform=ExportPlatform.YOUTUBE_SHORTS,
                 viral_score=moment.viral_score,
                 views_predicted=int(moment.viral_score * 1200),

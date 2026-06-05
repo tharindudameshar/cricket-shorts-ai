@@ -24,16 +24,22 @@ def run_analysis_pipeline(
         if on_progress:
             on_progress(p, msg)
 
-    report(5, "Extracting frames...")
-    frames, timestamps, duration = extract_frames(video_path, sample_fps=2.0)
-    if duration <= 0:
-        duration = 1500.0
-
     if settings.ai_demo_mode:
+        from app.services.pipeline.video_info import get_video_duration
+
+        report(10, "Demo mode: reading video metadata...")
+        duration = get_video_duration(video_path)
+        if duration <= 0:
+            duration = 1500.0
         report(50, "Demo mode: generating sample highlights...")
         moments = generate_demo_moments(duration, count=15)
         report(90, f"Detected {len(moments)} moments")
         return PipelineResult(duration_seconds=duration, moments=moments)
+
+    report(5, "Extracting frames...")
+    frames, timestamps, duration = extract_frames(video_path, sample_fps=2.0)
+    if duration <= 0:
+        duration = 1500.0
 
     report(20, "Analyzing audio excitement...")
     audio_times, audio_curve, audio_peaks = analyze_audio_excitement(video_path)

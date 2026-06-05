@@ -36,8 +36,8 @@ class GeneratedShort(Base):
     file_path: Mapped[str] = mapped_column(Text)
     thumbnail_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_seconds: Mapped[float] = mapped_column(Float)
-    width: Mapped[int] = mapped_column(Integer, default=1080)
-    height: Mapped[int] = mapped_column(Integer, default=1920)
+    width: Mapped[int] = mapped_column(Integer, default=2160)
+    height: Mapped[int] = mapped_column(Integer, default=3840)
     fps: Mapped[int] = mapped_column(Integer, default=30)
     platform: Mapped[ExportPlatform] = mapped_column(
         Enum(ExportPlatform), default=ExportPlatform.YOUTUBE_SHORTS

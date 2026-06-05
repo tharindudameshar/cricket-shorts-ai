@@ -44,12 +44,6 @@ export default async function JobPage({
       {isActive && (
         <div className="mt-6">
           <JobPoller jobId={id} initial={job} />
-          <div className="mt-4">
-            <ProgressBar
-              value={job.progress}
-              label={job.status_message}
-            />
-          </div>
         </div>
       )}
 

@@ -24,6 +24,15 @@ Automatically convert long cricket match videos (20–60 minutes) into viral-rea
 
 ## Quick Start
 
+### One terminal (easiest)
+
+```bash
+cd ~/Projects/cricket-shorts-ai
+./run.sh
+```
+
+Opens **http://localhost:3000** (API + worker + frontend). Press **Ctrl+C** to stop everything.
+
 ### Prerequisites
 
 - Node.js 20+
@@ -91,6 +100,42 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). API docs: [http://localhost:8000/docs](http://localhost:8000/docs).
+
+## Batch folder processing
+
+Process many match videos at once — **~15 shorts per video**.
+
+### How it works
+
+1. Drop `.mp4`, `.mov`, `.mkv` files into the inbox folder (default: `storage/inbox/`)
+2. The **worker** auto-scans the inbox every ~10 seconds and queues each video
+3. Processed originals move to `storage/inbox/processed/`; failures go to `storage/inbox/failed/`
+4. Shorts appear in **Gallery** and **Download Center** when each job completes
+
+### UI
+
+Open **Batch Folder** in the app, or trigger a scan manually.
+
+### CLI
+
+```bash
+cd backend
+./run-batch.sh --status              # pending / processed counts
+./run-batch.sh                       # one-time scan
+./run-batch.sh --watch               # watch folder continuously
+./run-batch.sh --folder /path/to/videos --league ipl
+```
+
+### API
+
+```bash
+curl http://localhost:8000/api/jobs/batch-folder/status
+curl -X POST http://localhost:8000/api/jobs/batch-folder \
+  -H "Content-Type: application/json" \
+  -d '{"league":"ipl"}'
+```
+
+Ensure `./run-worker.sh` is running — it processes queued jobs and auto-scans the inbox.
 
 ## Demo Mode
 

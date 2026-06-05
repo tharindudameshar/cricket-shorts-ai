@@ -12,12 +12,16 @@ from app.models.short import GeneratedShort
 from app.schemas.highlight import HighlightResponse
 from app.schemas.job import (
     AnalyticsResponse,
+    BatchFolderRequest,
+    BatchFolderResponse,
     JobCreate,
     JobCreateYouTube,
     JobListItem,
     JobResponse,
 )
 from app.schemas.short import ShortResponse
+from app.services.batch_folder import ingest_inbox_folder, inbox_status
+from app.services.job_cleanup import delete_job_by_id, delete_jobs_by_status
 from app.services.storage import StorageService
 from app.services.youtube import download_youtube
 
@@ -63,6 +67,48 @@ async def analytics(db: AsyncSession = Depends(get_db)) -> AnalyticsResponse:
         top_highlight_types=top_types,
         processing_hours_saved=round((short_count or 0) * 0.25, 1),
     )
+
+
+@router.get("/batch-folder/status")
+async def batch_folder_status() -> dict:
+    return inbox_status()
+
+
+@router.post("/batch-folder", response_model=BatchFolderResponse)
+async def batch_folder_scan(
+    body: BatchFolderRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+) -> BatchFolderResponse:
+    body = body or BatchFolderRequest()
+    result = await ingest_inbox_folder(
+        db,
+        folder=body.folder_path,
+        league=body.league,
+        max_files=body.max_files,
+    )
+    return BatchFolderResponse(
+        inbox_path=result.inbox_path,
+        scanned=result.scanned,
+        queued=result.queued,
+        skipped=result.skipped,
+        failed=result.failed,
+        errors=result.errors,
+        jobs=[JobResponse.model_validate(j) for j in result.jobs],
+    )
+
+
+@router.delete("/completed")
+async def delete_completed_jobs(db: AsyncSession = Depends(get_db)) -> dict:
+    count = await delete_jobs_by_status(db, [JobStatus.COMPLETED, JobStatus.FAILED])
+    return {"deleted": count}
+
+
+@router.delete("/{job_id}")
+async def delete_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
+    deleted = await delete_job_by_id(db, job_id)
+    if not deleted:
+        raise HTTPException(404, "Job not found")
+    return {"deleted": True, "id": str(job_id)}
 
 
 @router.get("/{job_id}", response_model=JobResponse)
